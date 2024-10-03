@@ -6,19 +6,16 @@ const upload = require('../middleware/multerConfig'); // Import multer config
 
 const router = express.Router();
 
-// Log to confirm route setup
-console.log("Setting up admin routes...");
-
-// Route for admin signup with validation middleware
+// Route for admin signup
 router.post('/signup', validateAdminSignup, signup);
 
 // Route for admin login
 router.post('/login', login);
 
-// Route for updating admin profile (including avatar)
-router.put('/profile/:id', verifyToken, isAdmin, upload.single('avatar'), updateAdmin); // Use upload middleware here
+// Route for updating admin profile (including avatar upload)
+router.put('/profile/:id', verifyToken, isAdmin, upload.single('avatar'), updateAdmin);
 
 // Route for fetching admin profile
-router.get('/profile/:id', verifyToken, isAdmin, getAdminProfile); // Use verification and authorization middleware here
+router.get('/profile/:id', verifyToken, isAdmin, getAdminProfile);
 
 module.exports = router;

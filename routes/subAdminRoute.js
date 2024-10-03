@@ -10,11 +10,12 @@ const {
     getAssignedUsersForSubAdmin
 } = require('../controllers/subAdminController');
 const { verifyToken, isAdmin, isSubAdmin } = require('../middleware/auth');
+const upload = require('../middleware/multerConfig'); // Import multer config
 
 const router = express.Router();
 
-// Route to add a new sub-admin
-router.post('/add', verifyToken, isAdmin, addSubAdmin);
+// Route to add a new sub-admin (with avatar upload)
+router.post('/add', verifyToken, isAdmin, upload.single('avatar'), addSubAdmin);
 
 // Route to log in as a sub-admin
 router.post('/login', loginSubAdmin); // No auth needed
@@ -28,8 +29,8 @@ router.post('/assign', verifyToken, isAdmin, assignUserToSubAdmin);
 // Route to get a sub-admin by ID
 router.get('/:id', verifyToken, isAdmin, getSubAdminById);
 
-// Route to update sub-admin details
-router.put('/:id', verifyToken, isAdmin, updateSubAdmin);
+// Route to update sub-admin details (with avatar upload)
+router.put('/:id', verifyToken, isAdmin, upload.single('avatar'), updateSubAdmin);
 
 // Route to delete a sub-admin
 router.delete('/:id', verifyToken, isAdmin, deleteSubAdmin);

@@ -10,6 +10,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const Message = require('./models/messageModel');
 const errorHandler = require('./middleware/errorHandler');
+const path = require('path'); // for uploads
 
 require('dotenv').config();
 
@@ -26,6 +27,10 @@ const io = new Server(server, {
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+
+// Serve static files from the "uploads" directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/admin', adminRoutes);

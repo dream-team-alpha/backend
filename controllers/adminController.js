@@ -59,40 +59,36 @@ exports.login = async (req, res) => {
 
 // Update admin details (including avatar)
 exports.updateAdmin = async (req, res) => {
-  console.log("Update admin function called");
   const { id } = req.params;
-  const { username, email, firstName, lastName } = req.body; // Extract firstName and lastName from the request body
-  console.log('Request Body:', req.body); // Log the incoming request body
+  const { username, email, firstName, lastName } = req.body; // Extract relevant fields from request body
 
-  const avatar = req.file ? req.file.path : undefined; // Check if avatar upload is present
+  // Check if a new avatar has been uploaded
+  const avatar = req.file ? req.file.filename : undefined; // Get uploaded file if it exists
 
   try {
-    console.log(`Updating admin with ID: ${id}`);
+    // Find the admin by ID
     const admin = await Admin.findByPk(id);
     if (!admin) {
       return res.status(404).json({ message: 'Admin not found' });
     }
 
-    // Create an updated data object including firstName, lastName, username, email, and avatar
+    // Create an object with updated fields
     const updatedData = {
       username,
       email,
-      firstName,  // Add firstName to the updated data
-      lastName    // Add lastName to the updated data
+      firstName,
+      lastName,
     };
 
-    // Include avatar only if it exists
+    // If a new avatar has been uploaded, add it to the update object
     if (avatar) {
-      updatedData.avatar = avatar; 
+      updatedData.avatar = `/uploads/${avatar}`; // Save avatar path (relative to the server)
     }
 
-    // Log the updated data to check if all fields are included
-    console.log('Updated Data:', updatedData);
-    
-    // Update the admin with the new data
+    // Update the admin record with the new data
     await admin.update(updatedData);
-    console.log('Admin updated:', admin); // Log the updated admin object
 
+    // Respond with the updated admin profile
     res.status(200).json({ message: 'Admin updated successfully', admin });
   } catch (error) {
     console.error('Error updating admin:', error);

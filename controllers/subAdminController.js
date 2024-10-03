@@ -10,15 +10,21 @@ const addSubAdmin = async (req, res) => {
     console.log('Request Body:', req.body); // Log the request body
 
     const { email, firstName, lastName, password, passwordConfirmation } = req.body;
+    const avatar = req.file ? req.file.path : undefined; // Assuming you're using multer for file upload
+
+    // Input validation
+    if (!firstName || !lastName || !email || !password || !passwordConfirmation) {
+        return res.status(400).json({ message: 'First Name, Last Name, Email, Password, and Password Confirmation are required.' });
+    }
+
+    if (password !== passwordConfirmation) {
+        return res.status(400).json({ message: 'Password and Password Confirmation must match.' });
+    }
 
     try {
         const existingSubAdmin = await SubAdmin.findOne({ where: { email } });
         if (existingSubAdmin) {
             return res.status(400).json({ message: 'Sub-admin already exists' });
-        }
-
-        if (!firstName || !password || password !== passwordConfirmation) {
-            return res.status(400).json({ message: 'First Name, Password, and Password Confirmation are required and must match' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -27,7 +33,8 @@ const addSubAdmin = async (req, res) => {
             email,
             firstName,
             lastName,
-            password: hashedPassword
+            password: hashedPassword,
+            avatar // Include the avatar path
         });
 
         res.status(201).json({
@@ -35,12 +42,15 @@ const addSubAdmin = async (req, res) => {
             email: newSubAdmin.email,
             firstName: newSubAdmin.firstName,
             lastName: newSubAdmin.lastName,
+            avatar: newSubAdmin.avatar, // Return the avatar
             role: newSubAdmin.role
         });
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        console.error('Error adding sub-admin:', error); // Log error for debugging
+        res.status(500).json({ message: 'Server error while adding sub-admin', error: error.message });
     }
 };
+
 
 //login subadmin
 const loginSubAdmin = async (req, res) => {
@@ -129,28 +139,29 @@ const getSubAdminById = async (req, res) => {
 const updateSubAdmin = async (req, res) => {
     const { id } = req.params;
     const { firstName, lastName, email } = req.body;
-    const avatar = req.file ? req.file.path : undefined; // Assuming you're using multer for file upload
-  
+    const avatar = req.file ? req.file.path : undefined; // Get uploaded avatar path if provided
+
     try {
-      const subAdmin = await SubAdmin.findByPk(id);
-      if (!subAdmin) {
-        return res.status(404).json({ message: 'Sub-admin not found' });
-      }
-  
-      // Update only the fields that are provided
-      const updatedData = { firstName, lastName, email };
-      if (avatar) {
-        updatedData.avatar = avatar; // Update avatar if provided
-      }
-  
-      await subAdmin.update(updatedData);
-  
-      res.status(200).json({ message: 'Sub-admin updated successfully', subAdmin });
+        const subAdmin = await SubAdmin.findByPk(id);
+        if (!subAdmin) {
+            return res.status(404).json({ message: 'Sub-admin not found' });
+        }
+
+        // Update only the fields that are provided
+        const updatedData = { firstName, lastName, email };
+        if (avatar) {
+            updatedData.avatar = avatar; // Update avatar if provided
+        }
+
+        await subAdmin.update(updatedData);
+
+        res.status(200).json({ message: 'Sub-admin updated successfully', subAdmin });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
-  };
-  
+};
+
+
 // Delete a sub-admin
 const deleteSubAdmin = async (req, res) => {
     const { id } = req.params;
