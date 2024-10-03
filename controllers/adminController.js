@@ -54,3 +54,67 @@ exports.login = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+
+// Update admin details (including avatar)
+exports.updateAdmin = async (req, res) => {
+  console.log("Update admin function called");
+  const { id } = req.params;
+  const { username, email, firstName, lastName } = req.body; // Extract firstName and lastName from the request body
+  console.log('Request Body:', req.body); // Log the incoming request body
+
+  const avatar = req.file ? req.file.path : undefined; // Check if avatar upload is present
+
+  try {
+    console.log(`Updating admin with ID: ${id}`);
+    const admin = await Admin.findByPk(id);
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+
+    // Create an updated data object including firstName, lastName, username, email, and avatar
+    const updatedData = {
+      username,
+      email,
+      firstName,  // Add firstName to the updated data
+      lastName    // Add lastName to the updated data
+    };
+
+    // Include avatar only if it exists
+    if (avatar) {
+      updatedData.avatar = avatar; 
+    }
+
+    // Log the updated data to check if all fields are included
+    console.log('Updated Data:', updatedData);
+    
+    // Update the admin with the new data
+    await admin.update(updatedData);
+    console.log('Admin updated:', admin); // Log the updated admin object
+
+    res.status(200).json({ message: 'Admin updated successfully', admin });
+  } catch (error) {
+    console.error('Error updating admin:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+exports.getAdminProfile = async (req, res) => {
+  try {
+    const adminId = req.params.id; // Get admin ID from request parameters
+    const admin = await Admin.findByPk(adminId); // Fetch admin from the database
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+
+    // Send back the admin profile without sensitive information (like password)
+    const { password, ...adminProfile } = admin.toJSON(); // Exclude password field
+    return res.status(200).json(adminProfile);
+  } catch (error) {
+    console.error('Error fetching admin profile:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};

@@ -4,12 +4,12 @@ const cors = require('cors');
 const adminRoutes = require('./routes/adminRoute');
 const messageRoutes = require('./routes/messageRoute');
 const userRoutes = require('./routes/userRoutes');
-const subAdminRoutes = require('./routes/subAdminRoute'); // Include sub-admin routes
+const subAdminRoutes = require('./routes/subAdminRoute');
 const sequelize = require('./config/db');
 const http = require('http');
 const { Server } = require('socket.io');
 const Message = require('./models/messageModel');
-const errorHandler = require('./middleware/errorHandler'); // Custom error handling middleware
+const errorHandler = require('./middleware/errorHandler');
 
 require('dotenv').config();
 
@@ -29,13 +29,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/admin', adminRoutes);
-app.use('/api/message', messageRoutes);
+app.use('/api/messages', messageRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/subadmin', subAdminRoutes); // Add sub-admin routes
+app.use('/api/subadmin', subAdminRoutes);
 
 // Database Sync Function
 const syncDatabase = async () => {
   try {
+    // Consider using migrations for production
     await sequelize.sync();
     console.log('Database synced');
   } catch (err) {
@@ -47,42 +48,37 @@ syncDatabase();
 
 // Socket.IO Connection
 io.on('connection', (socket) => {
-  console.log('A user connected:', socket.id);
+  console.log('New client connected');
 
-  socket.on('joinRoom', (userId) => {
-    console.log(`User ${socket.id} joining room for userId ${userId}`);
-    socket.join(userId);  // Join a room with userId
-  });
+  // Listen for send message event
+  socket.on('sendMessage', async (message) => {
+    const { senderId, receiverId, content, senderType, receiverType } = message;
 
-  socket.on('sendMessage', async (messageData) => {
-    console.log('Message received from user:', messageData);
-    const { senderId, receiverId, content } = messageData;
-
-    // Validate message data
-    if (!senderId || !receiverId || !content) {
-      console.error('Invalid message data:', messageData);
-      return; // Exit if the message data is not valid
-    }
-
+    // Save the message to the database
     try {
-      // Save message to DB
-      const newMessage = await Message.create({ senderId, receiverId, content });
-      // Emit the message to both sender and receiver
-      io.to(senderId).emit('newMessage', newMessage); // Send to user
-      io.to(receiverId).emit('newMessage', newMessage); // Send to admin (admin should be listening to this)
-      console.log(`Message sent to ${senderId} and ${receiverId}`);
+      const savedMessage = await Message.create({
+        senderId,
+        receiverId,
+        content,
+        senderType,
+        receiverType,
+      });
+      // Broadcast message to the receiver
+      io.to(receiverId).emit('receiveMessage', savedMessage);
+      socket.emit('messageSent', savedMessage); // Acknowledge sender
     } catch (error) {
-      console.error('Error saving message:', error);
+      console.error('Failed to send message:', error);
+      socket.emit('error', 'Failed to send message');
     }
   });
 
   socket.on('disconnect', () => {
-    console.log('A user disconnected:', socket.id);
+    console.log('Client disconnected');
   });
 });
 
 // Error Handling Middleware
-app.use(errorHandler); // Use custom error handling middleware
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
