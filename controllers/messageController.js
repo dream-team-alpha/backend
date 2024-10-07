@@ -16,29 +16,35 @@ exports.sendMessage = async (req, res) => {
 
 // Function to fetch message history (token required)
 exports.fetchMessageHistory = async (req, res) => {
-  const userId = req.userId;
-  const userType = req.userType;
+  const userId = req.params.userId; // Get userId from route parameters
+  const adminId = req.params.adminId; // Get adminId from route parameters
+  const userType = req.userType; // Get userType from the token
 
   try {
     let messages;
 
     // For Admins: Fetch all messages
     if (userType === 'admin') {
-      messages = await Message.findAll(); // Admin can see all messages
+      messages = await Message.findAll({
+        where: {
+          [Op.or]: [
+            { senderId: adminId, receiverId: userId }, // Admin sending to user
+            { senderId: userId, receiverId: adminId }  // User sending to admin
+          ]
+        }
+      });
     } 
-    // For Sub-Admins: Fetch all relevant messages
+    // For Sub-Admins: Fetch relevant messages
     else if (userType === 'sub-admin') {
       messages = await Message.findAll({
         where: {
           [Op.or]: [
-            { senderId: userId }, // Messages sent by this sub-admin
-            { receiverId: userId }, // Messages received by this sub-admin
-            { receiverType: 'user' }, // Messages sent to users
-            { senderType: 'user' }, // Messages received from users
-            { receiverType: 'sub-admin' }, // Messages sent to other sub-admins
-            { senderType: 'sub-admin' }  // Messages received from other sub-admins
+            { senderId: adminId, receiverId: userId }, // Sub-admin sending to user
+            { senderId: userId, receiverId: adminId }, // User sending to sub-admin
+            { receiverType: 'sub-admin', senderType: 'sub-admin' } // Messages between sub-admins
           ]
-        }
+        },
+        order: [['createdAt', 'DESC'], ['id', 'ASC']] // Optional: order by createdAt and id
       });
     } else {
       return res.status(403).json({ message: 'Access denied' }); // Handle access for other users

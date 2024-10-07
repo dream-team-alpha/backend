@@ -7,6 +7,6 @@ const { verifyToken } = require('../middleware/auth');
 router.post('/send', sendMessage);
 
 // Route to fetch message history (token required)
-router.get('/history', verifyToken, fetchMessageHistory);
+router.get('/history/:userId/:adminId', verifyToken, fetchMessageHistory);
 
 module.exports = router;
