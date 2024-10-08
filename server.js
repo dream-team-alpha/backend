@@ -51,15 +51,17 @@ const syncDatabase = async () => {
 
 syncDatabase();
 
-// Socket.IO Connection
 io.on('connection', (socket) => {
   console.log('New client connected');
 
-  // Listen for send message event
+  socket.on('join', (userId) => {
+    socket.join(userId);
+    console.log(`User ${userId} joined`);
+    socket.emit('joinConfirmation', userId); // Confirm user has joined
+  });
+
   socket.on('sendMessage', async (message) => {
     const { senderId, receiverId, content, senderType, receiverType } = message;
-
-    // Save the message to the database
     try {
       const savedMessage = await Message.create({
         senderId,
@@ -68,9 +70,8 @@ io.on('connection', (socket) => {
         senderType,
         receiverType,
       });
-      // Broadcast message to the receiver
-      io.to(receiverId).emit('receiveMessage', savedMessage);
-      socket.emit('messageSent', savedMessage); // Acknowledge sender
+      io.to(receiverId).emit('receiveMessage', savedMessage); // Emit to receiver
+      socket.emit('messageSent', savedMessage); // Confirm message was sent
     } catch (error) {
       console.error('Failed to send message:', error);
       socket.emit('error', 'Failed to send message');
@@ -81,6 +82,7 @@ io.on('connection', (socket) => {
     console.log('Client disconnected');
   });
 });
+
 
 // Error Handling Middleware
 app.use(errorHandler);
