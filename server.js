@@ -28,7 +28,6 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-
 // Serve static files from the "uploads" directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -54,35 +53,15 @@ syncDatabase();
 io.on('connection', (socket) => {
   console.log('New client connected');
 
-  socket.on('join', (userId) => {
-    socket.join(userId);
-    console.log(`User ${userId} joined`);
-    socket.emit('joinConfirmation', userId); // Confirm user has joined
-  });
-
-  socket.on('sendMessage', async (message) => {
-    const { senderId, receiverId, content, senderType, receiverType } = message;
-    try {
-      const savedMessage = await Message.create({
-        senderId,
-        receiverId,
-        content,
-        senderType,
-        receiverType,
-      });
-      io.to(receiverId).emit('receiveMessage', savedMessage); // Emit to receiver
-      socket.emit('messageSent', savedMessage); // Confirm message was sent
-    } catch (error) {
-      console.error('Failed to send message:', error);
-      socket.emit('error', 'Failed to send message');
-    }
+  socket.on('sendMessage', (message) => {
+    // Broadcast the message to all connected clients
+    socket.broadcast.emit('receiveMessage', message);
   });
 
   socket.on('disconnect', () => {
     console.log('Client disconnected');
   });
 });
-
 
 // Error Handling Middleware
 app.use(errorHandler);
