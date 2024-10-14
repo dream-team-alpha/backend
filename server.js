@@ -11,6 +11,7 @@ const { Server } = require('socket.io');
 const Message = require('./models/messageModel');
 const errorHandler = require('./middleware/errorHandler');
 const path = require('path'); // for uploads
+const { setSocketInstance } = require('./controllers/userController');
 
 require('dotenv').config();
 
@@ -49,6 +50,8 @@ const syncDatabase = async () => {
 };
 
 syncDatabase();
+
+setSocketInstance(io); 
 
 io.on('connection', (socket) => {
   console.log('New client connected');
