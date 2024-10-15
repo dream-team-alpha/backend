@@ -5,6 +5,7 @@ const adminRoutes = require('./routes/adminRoute');
 const messageRoutes = require('./routes/messageRoute');
 const userRoutes = require('./routes/userRoutes');
 const subAdminRoutes = require('./routes/subAdminRoute');
+const feedbackRoutes = require('./routes/feedbackRoute');
 const sequelize = require('./config/db');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -37,6 +38,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/subadmin', subAdminRoutes);
+app.use('/api/feedback', feedbackRoutes);
+
 
 // Database Sync Function
 const syncDatabase = async () => {
