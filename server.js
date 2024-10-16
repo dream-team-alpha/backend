@@ -59,15 +59,24 @@ setSocketInstance(io);
 io.on('connection', (socket) => {
   console.log('New client connected');
 
-  socket.on('sendMessage', (message) => {
-    // Broadcast the message to all connected clients
-    socket.broadcast.emit('receiveMessage', message);
+  // Join a user/admin to a room
+  socket.on('joinRoom', ({ userId, adminId }) => {
+    const room = `user_${userId}_admin_${adminId}`;
+    socket.join(room);
+    console.log(`User ${userId} joined room ${room}`);
+  });
+
+  // Handle sending a message to a specific room
+  socket.on('sendMessage', ({ room, message }) => {
+    io.to(room).emit('receiveMessage', message);
+    console.log(`Message sent to room ${room}:`, message);
   });
 
   socket.on('disconnect', () => {
     console.log('Client disconnected');
   });
 });
+
 
 // Error Handling Middleware
 app.use(errorHandler);
