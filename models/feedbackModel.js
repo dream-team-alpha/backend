@@ -34,6 +34,28 @@ const Feedback = sequelize.define('Feedback', {
   feedbackText: {
     type: DataTypes.TEXT,
     allowNull: true 
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    get() {
+      const dt = this.getDataValue('createdAt');
+      return dt ? new Date(dt).toISOString().slice(0, 19).replace('T', ' ') : null;
+    },
+    set(value) {
+      this.setDataValue('createdAt', new Date(value));
+    }
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    get() {
+      const dt = this.getDataValue('updatedAt');
+      return dt ? new Date(dt).toISOString().slice(0, 19).replace('T', ' ') : null;
+    },
+    set(value) {
+      this.setDataValue('updatedAt', new Date(value));
+    }
   }
 }, {
   timestamps: true

@@ -14,9 +14,30 @@ const User = sequelize.define('User', {
   email: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
     validate: {
       isEmail: true // Validate email format
+    }
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    get() {
+      const dt = this.getDataValue('createdAt');
+      return dt ? new Date(dt).toISOString().slice(0, 19).replace('T', ' ') : null;
+    },
+    set(value) {
+      this.setDataValue('createdAt', new Date(value));
+    }
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    get() {
+      const dt = this.getDataValue('updatedAt');
+      return dt ? new Date(dt).toISOString().slice(0, 19).replace('T', ' ') : null;
+    },
+    set(value) {
+      this.setDataValue('updatedAt', new Date(value));
     }
   }
 }, {

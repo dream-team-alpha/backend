@@ -7,9 +7,16 @@ exports.signup = async (req, res) => {
   const { firstName, lastName, email, username, password } = req.body;
 
   try {
-    const existingAdmin = await Admin.findOne({ where: { email } });
-    if (existingAdmin) {
+    const duplicateEmail = await Admin.findOne({ where: { email } });
+    if (duplicateEmail) {
+      console.error(`Error: Email already registered - ${email}`);
       return res.status(400).json({ message: 'Email already registered' });
+    }
+
+    const duplicateUsername = await Admin.findOne({ where: { username } });
+    if (duplicateUsername) {
+      console.error(`Error: Username already taken - ${username}`);
+      return res.status(400).json({ message: 'Username already taken' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -24,9 +31,11 @@ exports.signup = async (req, res) => {
 
     res.status(201).json({ message: 'Admin registered successfully!', admin });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error('Error during admin signup:', err);
+    res.status(500).json({ error: err.message });
   }
 };
+
 
 // Admin Login
 exports.login = async (req, res) => {

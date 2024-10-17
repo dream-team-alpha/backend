@@ -22,9 +22,10 @@ const addSubAdmin = async (req, res) => {
     }
 
     try {
-        const existingSubAdmin = await SubAdmin.findOne({ where: { email } });
-        if (existingSubAdmin) {
-            return res.status(400).json({ message: 'Sub-admin already exists' });
+        // Check for existing sub-admin with the same email
+        const existingSubAdminEmail = await SubAdmin.findOne({ where: { email } });
+        if (existingSubAdminEmail) {
+            return res.status(400).json({ message: 'Sub-admin with this email already exists.' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
